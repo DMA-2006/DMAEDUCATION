@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/MOO.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DMAEDUCATION</title>
+   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;600&display=swap">
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-primary-fixed-variant": "#374765",
+          "surface-container-highest": "#d8e3fa",
+          "on-secondary-fixed": "#331200",
+          "surface-container-lowest": "#ffffff",
+          "on-secondary-fixed-variant": "#763300",
+          "primary": "#031632",
+          "secondary": "#9b4500",
+          "secondary-container": "#fc8a40",
+          "on-secondary-container": "#672c00",
+          "background": "#f9f9ff",
+          "on-background": "#111c2c",
+          "surface": "#f9f9ff",
+          "on-surface": "#111c2c",
+          "surface-variant": "#d8e3fa",
+          "on-surface-variant": "#44474d",
+          "primary-container": "#1a2b48",
+          "on-primary": "#ffffff",
+          "on-primary-container": "#8293b5",
+          "surface-container-low": "#f0f3ff",
+          "surface-dim": "#cfdaf1",
+          "outline-variant": "#c5c6ce"
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+        spacing: { "margin-desktop": "64px", gutter: "24px", "container-max": "1200px", "margin-mobile": "16px", base: "8px" },
+        fontFamily: {
+          "headline-md": ["Montserrat"], "display-lg-mobile": ["Montserrat"], "display-lg": ["Montserrat"],
+          "body-md": ["Inter"], "label-sm": ["Inter"], "body-lg": ["Inter"]
+        },
+        fontSize: {
+          "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+          "display-lg-mobile": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+          "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+          "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+          "label-sm": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+          "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }]
+        }
+      }
+    }
+  };
+</script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

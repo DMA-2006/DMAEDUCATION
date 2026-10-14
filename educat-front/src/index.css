@@ -1,0 +1,40 @@
+/* Ajoute ceci à la fin de src/index.css */
+@import "katex/dist/katex.min.css";
+.clay-shadow {
+  box-shadow: inset 2px 2px 8px rgba(255,255,255,0.8), inset -2px -2px 8px rgba(3,22,50,0.05), 0 8px 32px -4px rgba(3,22,50,0.1);
+}
+.clay-button-shadow {
+  box-shadow: 0 4px 12px rgba(252,138,64,0.3), 0 2px 0 #9b4500;
+}
+.clay-button-shadow:active {
+  box-shadow: 0 2px 4px rgba(252,138,64,0.2), 0 0 0 #9b4500;
+  transform: translateY(2px);
+}
+.clay-card {
+  background-color: #F4F7FA;
+  border: 1px solid #e0e3e6;
+}
+html {
+  scroll-behavior: smooth;
+}
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.clay-shadow {
+  box-shadow:
+    inset 2px 2px 8px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 8px rgba(3, 22, 50, 0.05),
+    0 8px 32px -4px rgba(3, 22, 50, 0.1);
+}
+.clay-button-shadow {
+  box-shadow: 0 4px 12px rgba(252, 138, 64, 0.3), 0 2px 0 #9b4500;
+}
+.clay-button-shadow:active {
+  box-shadow: 0 2px 4px rgba(252, 138, 64, 0.2), 0 0 0 #9b4500;
+  transform: translateY(2px);
+}
+.clay-card {
+  background-color: #f4f7fa;
+  border: 1px solid #e0e3e6;
+}

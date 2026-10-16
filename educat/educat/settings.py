@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -105,6 +107,18 @@ DATABASES = {
         "OPTIONS": {"pool": {"min_size": 2, "max_size": 10, "timeout": 10}},
     }
 }
+# En ligne, l'hébergeur fournit UNE adresse (DATABASE_URL). Si elle existe, elle
+# remplace la base locale ci-dessus ; sinon on garde la base de ton ordinateur.
+DATABASE_URL = config("DATABASE_URL", default="")
+if DATABASE_URL:
+    DATABASES["default"] = dj_database_url.parse(DATABASE_URL, ssl_require=True)
+    DATABASES["default"].setdefault("OPTIONS", {})["pool"] = {
+        "min_size": 1, "max_size": 5, "timeout": 10,
+    }
+    # Neon s'endort après 5 min : Django vérifie qu'une connexion est vivante
+    # avant de s'en servir, au lieu de planter sur une connexion morte.
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -124,7 +138,16 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # à restreindre à ton domaine front en production
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Adresse exacte du site React (Cloudflare), sans "/" final.
+SITE_URL = config("SITE_URL", default="").strip().rstrip("/")
+CORS_ALLOWED_ORIGINS = [SITE_URL] if SITE_URL else []
+
+# Render termine le HTTPS avant Django : sans cette ligne, Django croit être en
+# http et refuse la connexion à /admin/ (erreur CSRF 403).
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") 
 
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Africa/Abidjan"
@@ -132,6 +155,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 

@@ -12,3 +12,6 @@ json-repair
 pdfplumber
 requests
 beautifulsoup4
+gunicorn
+whitenoise
+dj-database-url

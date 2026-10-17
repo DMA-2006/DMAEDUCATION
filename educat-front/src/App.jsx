@@ -3,8 +3,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import QuizSetup from "./pages/QuizSetup";
 import QuizPlay from "./pages/QuizPlay";
 import QuizResult from "./pages/QuizResult";
@@ -23,8 +21,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quiz" element={<Home />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/register" element={<Auth />} />
           <Route path="/about" element={<About />} />
 
           <Route

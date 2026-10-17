@@ -21,6 +21,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quiz" element={<Home />} />
+          {/* Connexion et inscription : une seule page (Auth.jsx), qui ouvre le bon panneau selon l'adresse */}
+          <Route path="/login" element={<Auth />} />
+          <Route path="/register" element={<Auth />} />
           <Route path="/about" element={<About />} />
 
           <Route

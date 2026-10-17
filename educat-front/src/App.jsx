@@ -12,7 +12,7 @@ import About from "./pages/About";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import AdminRoute from "./components/AdminRoute";
+import AdminRoute from "./components/Adminroute";
 
 export default function App() {
   return (

@@ -10,14 +10,15 @@ Déroulement :
 
 Le code n'est jamais enregistré en clair : la base ne garde que son empreinte.
 """
+import http.client
+import json
 import secrets
 import smtplib
 import socket
+import ssl
 import threading
 from datetime import timedelta
 from email.utils import parseaddr
-
-import requests
 
 from django.conf import settings
 from django.core import signing
@@ -70,7 +71,38 @@ class EmailBackendIPv4(BackendSMTP):
         return _SMTPIPv4
 
 
-URL_API_BREVO = "https://api.brevo.com/v3/smtp/email"
+HOTE_API_BREVO = "api.brevo.com"
+CHEMIN_API_BREVO = "/v3/smtp/email"
+
+
+class _ConnexionHTTPSIPv4(http.client.HTTPSConnection):
+    """Connexion HTTPS en IPv4 (même raison que _SMTPIPv4 ci-dessus)."""
+
+    def connect(self):
+        adresse = socket.getaddrinfo(self.host, self.port, socket.AF_INET, socket.SOCK_STREAM)[0][4]
+        brut = socket.create_connection(adresse, self.timeout)
+        self.sock = self._context.wrap_socket(brut, server_hostname=self.host)
+
+
+def _poster_brevo(corps):
+    """Envoie la requête à l'API de Brevo, en IPv4 d'abord. Renvoie (statut, texte)."""
+    donnees = json.dumps(corps).encode("utf-8")
+    entetes = {
+        "api-key": settings.BREVO_API_KEY,
+        "accept": "application/json",
+        "content-type": "application/json",
+    }
+    for classe in (_ConnexionHTTPSIPv4, http.client.HTTPSConnection):
+        connexion = classe(HOTE_API_BREVO, 443, timeout=15, context=ssl.create_default_context())
+        try:
+            connexion.request("POST", CHEMIN_API_BREVO, body=donnees, headers=entetes)
+            reponse = connexion.getresponse()
+            return reponse.status, reponse.read().decode("utf-8", "replace")
+        except OSError:
+            if classe is http.client.HTTPSConnection:
+                raise  # ni l'IPv4 ni l'autre voie n'ont marché
+        finally:
+            connexion.close()
 
 
 class EmailBackendBrevo(BaseEmailBackend):
@@ -96,14 +128,11 @@ class EmailBackendBrevo(BaseEmailBackend):
                 if type_mime == "text/html":
                     corps["htmlContent"] = contenu
             try:
-                reponse = requests.post(
-                    URL_API_BREVO,
-                    json=corps,
-                    headers={"api-key": settings.BREVO_API_KEY, "accept": "application/json"},
-                    timeout=15,
-                )
-                if reponse.status_code >= 300:
-                    raise OSError(f"Brevo a refusé l'envoi ({reponse.status_code}) : {reponse.text[:300]}")
+                statut, texte = _poster_brevo(corps)
+                if statut >= 300:
+                    # Ex. 401 « unrecognised IP address » : l'adresse IP du serveur
+                    # n'est pas autorisée dans Brevo (Sécurité > IP autorisées).
+                    raise OSError(f"Brevo a refusé l'envoi ({statut}) : {texte[:300]}")
                 envoyes += 1
             except Exception:
                 if not self.fail_silently:

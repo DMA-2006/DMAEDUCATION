@@ -410,17 +410,21 @@ class ActionsAdminTests(TestCase):
 )
 class EnvoiBrevoTests(TestCase):
     def test_le_code_part_par_l_api_brevo(self):
-        from unittest.mock import MagicMock
-
         User.objects.create_user("awa", email="awa@gmail.com", password="MotDePasse-42", email_verifie=True)
-        reponse = MagicMock(status_code=201, text="")
-        with patch("educc.services.otp.requests.post", return_value=reponse) as envoi:
+        with patch("educc.services.otp._poster_brevo", return_value=(201, "")) as envoi:
             res = APIClient().post("/api/login/", {"username": "awa", "password": "MotDePasse-42"}, format="json")
         self.assertEqual(res.status_code, 200)
         envoi.assert_called_once()
-        corps = envoi.call_args.kwargs["json"]
+        corps = envoi.call_args.args[0]
         self.assertEqual(corps["sender"], {"name": "DMAEDUCATION", "email": "expediteur@gmail.com"})
         self.assertEqual(corps["to"], [{"email": "awa@gmail.com"}])
         self.assertRegex(corps["subject"], r"^\d{6} est ton code")
         self.assertIn("htmlContent", corps)
-        self.assertEqual(envoi.call_args.kwargs["headers"]["api-key"], "xkeysib-test")
+
+    def test_un_refus_de_brevo_est_signale(self):
+        from django.core import mail
+        from django.core.mail import EmailMessage
+
+        with patch("educc.services.otp._poster_brevo", return_value=(401, "unrecognised IP address")):
+            with self.assertRaises(OSError):
+                mail.get_connection().send_messages([EmailMessage("s", "b", None, ["a@gmail.com"])])

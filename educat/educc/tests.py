@@ -400,3 +400,27 @@ class ActionsAdminTests(TestCase):
         inscrits = {i["username"]: i for i in self.api_admin.get("/api/admin/stats/").data["inscrits"]}
         self.assertFalse(inscrits["chef"]["modifiable"])
         self.assertTrue(inscrits["awa"]["modifiable"])
+
+
+@override_settings(
+    BREVO_API_KEY="xkeysib-test",
+    DEFAULT_FROM_EMAIL="DMAEDUCATION <expediteur@gmail.com>",
+    EMAIL_BACKEND="educc.services.otp.EmailBackendBrevo",
+    OTP_ENVOI_SYNCHRONE=True,
+)
+class EnvoiBrevoTests(TestCase):
+    def test_le_code_part_par_l_api_brevo(self):
+        from unittest.mock import MagicMock
+
+        User.objects.create_user("awa", email="awa@gmail.com", password="MotDePasse-42", email_verifie=True)
+        reponse = MagicMock(status_code=201, text="")
+        with patch("educc.services.otp.requests.post", return_value=reponse) as envoi:
+            res = APIClient().post("/api/login/", {"username": "awa", "password": "MotDePasse-42"}, format="json")
+        self.assertEqual(res.status_code, 200)
+        envoi.assert_called_once()
+        corps = envoi.call_args.kwargs["json"]
+        self.assertEqual(corps["sender"], {"name": "DMAEDUCATION", "email": "expediteur@gmail.com"})
+        self.assertEqual(corps["to"], [{"email": "awa@gmail.com"}])
+        self.assertRegex(corps["subject"], r"^\d{6} est ton code")
+        self.assertIn("htmlContent", corps)
+        self.assertEqual(envoi.call_args.kwargs["headers"]["api-key"], "xkeysib-test")

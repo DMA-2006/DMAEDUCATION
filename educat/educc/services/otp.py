@@ -15,10 +15,14 @@ import smtplib
 import socket
 import threading
 from datetime import timedelta
+from email.utils import parseaddr
+
+import requests
 
 from django.conf import settings
 from django.core import signing
 from django.core.mail import send_mail
+from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.backends.smtp import EmailBackend as BackendSMTP
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
@@ -64,6 +68,47 @@ class EmailBackendIPv4(BackendSMTP):
     @property
     def connection_class(self):
         return _SMTPIPv4
+
+
+URL_API_BREVO = "https://api.brevo.com/v3/smtp/email"
+
+
+class EmailBackendBrevo(BaseEmailBackend):
+    """
+    Envoi des e-mails par l'API web de Brevo (HTTPS), au lieu du SMTP.
+    Indispensable sur l'offre gratuite de Render, qui bloque les ports SMTP
+    (25, 465, 587) : Gmail en SMTP n'y part jamais. Activé quand BREVO_API_KEY
+    est renseigné (voir settings.py).
+    """
+
+    def send_messages(self, messages):
+        envoyes = 0
+        for message in messages:
+            nom, adresse = parseaddr(message.from_email or settings.DEFAULT_FROM_EMAIL)
+            corps = {
+                "sender": {"name": nom or "DMAEDUCATION", "email": adresse},
+                "to": [{"email": destinataire} for destinataire in message.to],
+                "subject": message.subject,
+                "textContent": message.body,
+            }
+            # Version HTML de l'e-mail, si send_mail en a fourni une
+            for contenu, type_mime in getattr(message, "alternatives", []):
+                if type_mime == "text/html":
+                    corps["htmlContent"] = contenu
+            try:
+                reponse = requests.post(
+                    URL_API_BREVO,
+                    json=corps,
+                    headers={"api-key": settings.BREVO_API_KEY, "accept": "application/json"},
+                    timeout=15,
+                )
+                if reponse.status_code >= 300:
+                    raise OSError(f"Brevo a refusé l'envoi ({reponse.status_code}) : {reponse.text[:300]}")
+                envoyes += 1
+            except Exception:
+                if not self.fail_silently:
+                    raise
+        return envoyes
 
 
 def _envoyer(email, code):

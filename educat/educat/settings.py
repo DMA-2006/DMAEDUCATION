@@ -15,14 +15,22 @@ AUTH_USER_MODEL = "educc.User"
 # (APIs et services > Identifiants). À renseigner dans le fichier .env.
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="").strip()
 
-# Codes OTP envoyés par e-mail (inscription + connexion), depuis un compte Gmail.
-# Dans le .env : EMAIL_HOST_USER = l'adresse Gmail, EMAIL_HOST_PASSWORD = un « mot de
-# passe d'application » (compte Google > Sécurité > Validation en deux étapes).
-# Tant que ces deux lignes sont vides, aucun e-mail ne part : le code s'affiche dans
-# le terminal de Django, ce qui suffit pour tester.
+# Codes OTP envoyés par e-mail (inscription + connexion). Trois façons, la première
+# renseignée l'emporte :
+# 1. Brevo (API web, HTTPS) : BREVO_API_KEY + EMAIL_EXPEDITEUR (adresse validée chez
+#    Brevo). OBLIGATOIRE sur l'offre gratuite de Render, qui bloque le SMTP.
+# 2. Gmail en SMTP : EMAIL_HOST_USER = l'adresse Gmail, EMAIL_HOST_PASSWORD = un « mot
+#    de passe d'application ». Marche en local, pas sur Render gratuit.
+# 3. Rien de renseigné : aucun e-mail ne part, le code s'affiche dans le terminal de
+#    Django (ou dans les journaux de Render), ce qui suffit pour tester.
+BREVO_API_KEY = config("BREVO_API_KEY", default="").strip()
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="").strip()
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="").replace(" ", "")
-if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+EMAIL_EXPEDITEUR = config("EMAIL_EXPEDITEUR", default=EMAIL_HOST_USER).strip()
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "educc.services.otp.EmailBackendBrevo"
+    DEFAULT_FROM_EMAIL = f"DMAEDUCATION <{EMAIL_EXPEDITEUR}>"
+elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "educc.services.otp.EmailBackendIPv4"
     EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
     EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
